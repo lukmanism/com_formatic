@@ -1,0 +1,108 @@
+.icon-48-formatics {
+      background-image: url(../images/l_formatics.png);
+      padding-left:60px!important;
+}
+
+.icon-48-formatic {
+      background-image: url(../images/l_formatics.png);
+      padding-left:60px!important;
+}
+
+ul.sfield {
+}
+ul.sfield li {
+	cursor: pointer;
+}
+li.addfield {
+    padding-left: 20px;
+}
+li.addfield:hover {
+	color: #146295;
+    background-image: url("../images/add.png");
+    background-position: 0 4px;
+    background-repeat: no-repeat;
+}
+
+#formView {
+	
+}
+
+#formView input, textarea, label,
+#formProp input, textarea, label {
+	width: auto!important;	
+}
+#formView .rows {
+	clear: both;
+    float: left;
+    margin-left: 20px;
+    padding: 4px;
+    position: relative;
+    width: 94%;
+}
+#formView .rows.active,
+#formView .rows:hover {
+	background-color: #F1F9FE;
+    -webkit-border-radius: 4px;
+    -moz-border-radius: 4px;
+    border-radius: 4px;
+    background-color:#E4F2FC;
+}
+.rows h3 {
+	color: #C7C8BF;
+    font-size: 18px;
+    left: -28px;
+    position: absolute;
+    text-align: right;
+    top: -14px;
+    width: 23px;
+    cursor: pointer;
+}
+.rows.active h3,
+.rows h3:hover {
+	color: #146295;	
+}
+.rows label,
+.rows input {
+	float: left;
+}
+#del {
+    display: none;
+    height: auto;
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    min-width: 16px;
+    width: auto !important;
+}
+#del .confirm,
+#del .cancel {
+    float: left;
+    width: 16px;
+    height: 16px;
+    background-repeat: no-repeat;
+    cursor: pointer;
+}
+#del .confirm {
+    background-image: url('../images/confirm.png');
+    display: none;
+}
+#del.halt .confirm {
+    display: block;
+}
+#del .cancel {
+    background-image: url('../images/delete.png');
+}
+.active #del {
+	display: block;
+}
+#formProp #apply,
+#formView #apply,
+#formParams #apply {
+    clear: both;
+    cursor: pointer;
+    float: right;
+}
+#formParams label,
+#formProp label {
+    text-transform: capitalize;
+}

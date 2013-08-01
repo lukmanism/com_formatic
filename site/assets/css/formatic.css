@@ -1,0 +1,13 @@
+.formatic {
+	padding: 10px;
+}
+.rowmatic {
+	padding-top: 4px;
+	padding-bottom: 4px;
+}
+.rowmatic label {
+	width: 25%;
+	display: inline-block;
+}
+.rowmatic input {
+}
