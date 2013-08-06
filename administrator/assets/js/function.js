@@ -59,13 +59,13 @@ function construct(request, source){
             });
         break;
         case 'load':
-            // load views & properties
+            // load views
             $.each(request, function(key, val) {
                 options     = val['format'].split('_');
                 element     = options[0];
                 type        = options[1];
                 viewElement(element, type, key, val['format'], val);
-                getRequest(val, gettoken, key, 'load');  
+                getRequest(val, gettoken, key, 'load');
             });
         break;
         case 'delete':
@@ -82,7 +82,7 @@ function construct(request, source){
                     type        = options[1];
                     viewElement(element, type, key, val['format'], val);
                     getRequest(val, gettoken, key, 'load');
-                });                
+                });
             }
         break;
     }
@@ -93,6 +93,7 @@ function construct(request, source){
 
 // View
 function viewElement(element, type, rowid, request, thatval){
+// console.log(element, type, rowid, request, thatval);
     var field, hiddenfield;
     var viewContainer   = $(getContainer(rowid, request));
     var formView        = $('#formView .fields');
@@ -148,6 +149,7 @@ function propElement(element, type, rowid, request, attributes){
             break;
             case 'values':
             case 'options':
+            case 'html':
                 element     = 'textarea';
                 thistype    = 'textarea';
             break;
@@ -160,17 +162,6 @@ function propElement(element, type, rowid, request, attributes){
         propContainer.append(attrField);
     });
     propContainer.append('<input type="button" id="apply" value="Apply" disabled="disabled" />');
-
-    //not yet applied
-    // validation  = getValidation(type);
-
-    // if(typeof validation != 'undefined'){
-    //     attrField   = $(getFieldProp('select', '', 'validation'));
-    //     $.each(validation, function(tkey, tval) {
-    //         $(attrField[1]).append(new Option(tval[1], tval[0]));
-    //     });
-    //     propContainer.append(attrField);        
-    // }   
 }
 
 function getContainer(rowid, request) {
@@ -179,7 +170,6 @@ function getContainer(rowid, request) {
 }
 
 function getFieldProp(field, type, name, value){
-            console.log(field, type, name, value);
     var label = $('<label>'+name+'</label>');
     var element;
     switch(field){
@@ -240,7 +230,6 @@ function getFieldView(field, type, attr) {
     var element = {}, elements, labelElements, allElements = {};
     var voidAttr = ['values', 'options', 'format', 'label'];
 
-
     switch(field){
         case 'input':
             if(type == 'hidden'){
@@ -255,11 +244,28 @@ function getFieldView(field, type, attr) {
         case 'select':
             element     = '<select class="field" />';
         break;
+        case 'custom':
+            label = '';
+            element     = '<div class="field" />';
+        break;
     } 
 
     labelElements = $(label);
     if(typeof attr != 'undefined'){
         switch(type){
+            case 'html':
+                elements = $(element);
+                $.each(attr, function(name, val){
+                    if(voidAttr.indexOf(name) === -1){
+                        if(name == 'html'){
+                            elements = elements.html(val).text();
+                        } else {
+                            elements = elements.attr(name, val);                        
+                        }
+                    }
+                });
+                allElements[0]   = [labelElements, elements];            
+            break;
             case 'checkbox':
             case 'radio':
             left = attr['values'].split("\n");
@@ -317,11 +323,13 @@ function getFieldView(field, type, attr) {
 }
 
 function getAttr(type){
-    var attribute = {'class':'', 'name':''};    
+    // console.log(type);
+    var attribute = {'class':''};    
     switch(type){
         case 'text':
-            attribute['id']         = '';
+            attribute['name']       = '';
             attribute['label']      = '';
+            attribute['id']         = '';
             attribute['value']      = '';
             attribute['size']       = '';
             attribute['maxlength']  = '';
@@ -329,16 +337,22 @@ function getAttr(type){
             attribute['fieldtype']  = '';
         break;
         case 'textarea':
-            attribute['id']         = '';
+            attribute['name']       = '';
             attribute['label']      = '';
+            attribute['id']         = '';
             attribute['value']      = '';
             attribute['cols']       = '';
             attribute['rows']       = '';
             attribute['required']   = '';
         break;
-        case 'single':
+        case 'html':
             attribute['id']         = '';
+            attribute['html']       = '';
+        break;
+        case 'single':
+            attribute['name']       = '';
             attribute['label']      = '';
+            attribute['id']         = '';
             attribute['size']       = '';
             attribute['options']    = '';
             attribute['values']     = '';
@@ -346,6 +360,7 @@ function getAttr(type){
         break;
         case 'radio':
         case 'checkbox':
+            attribute['name']       = '';
             attribute['label']      = '';
             attribute['options']    = '';
             attribute['values']     = '';
@@ -354,6 +369,7 @@ function getAttr(type){
         case 'button':
         case 'submit':
         case 'reset':
+            attribute['name']       = '';
             attribute['id']         = '';
             attribute['value']      = '';
         break;
@@ -446,4 +462,13 @@ function getRequest(attribute, gettoken, rowid, method) {
             pushdata = data;
     });        
     return pushdata;
+}
+
+function htmlUnescape(value){
+    return String(value)
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
 }

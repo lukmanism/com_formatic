@@ -61,7 +61,7 @@ $(document).on("click", "#formProp #apply", function(){
 	request['title'] 	= ($(this).parent().attr('title'))? $(this).parent().attr('title'): $(this).parent().parent().attr('title');	
 
 	$('#formProp .row').each(function() {
-		prop[$(this).attr('name')] = $(this).val();
+		prop[$(this).attr('name')] = htmlEscape($(this).val());
 	})
 	request['properties'] = prop;
 	construct(request, 'update');
@@ -110,3 +110,13 @@ $(document).on("click", "#formView input[type=submit]", function(){
 $(document).on("click", "#formProp input[type=checkbox]", function(){
 	$(this).val($(this).prop("checked")? true: false);
 });
+
+
+function htmlEscape(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        // .replace(/"/g, '&quot;')
+        // .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}

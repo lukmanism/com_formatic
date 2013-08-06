@@ -129,6 +129,10 @@ Joomla.submitbutton = function(task) {
                 <ul>
                 <li class="addfield" title="textarea_textarea">Textarea</li>
             </ul>
+            <li>Custom
+                <ul>
+                <li class="addfield" title="custom_html">HTML</li>
+            </ul>
             </li>
         </ul>
         </div>
