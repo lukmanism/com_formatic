@@ -2,12 +2,11 @@
 	// session_destroy();
 	// exit;
 
-
 	if(!session_start()){
 		session_start();
 	}
 
-	$rowid = @$_GET['row'];
+	$rowid 	= @$_GET['row'];
 	$token 	= $_GET['token'];
 
 	switch($_GET['method']){
@@ -36,32 +35,45 @@
 			echo json_encode($_SESSION[$token]);
 		break;
 		case 'update':
+		// var_dump($_POST);
 		foreach($_POST as $pName => $pValue){
-			$v2 	= explode("\n", $pValue);
-			$v2		= array_filter($v2);
-			if($pName == 'values' || $pName == 'labels'){
-					$values = 'labels';
-					$labels = 'values';
-				$l1 	= (!empty($_SESSION[$token][$rowid][$labels]))? explode("\n", $_SESSION[$token][$rowid][$labels]): $v2;
-				$v1 	= (!empty($_SESSION[$token][$rowid][$values]))? explode("\n", $_SESSION[$token][$rowid][$values]): $v2;
-				$diff = array_diff($v1,$v2);
-				if(!empty($diff)){
-					foreach ($diff as $key => $value) {
-						$thatkeys = array_keys($v1, $diff[$key]);
-						if(count($l1) != count($v2)){
-							unset($l1[$thatkeys[0]]);						
+			if(is_array($pValue)){
+				foreach($pValue as $pName2 => $pValue2){
+					if(is_array($pValue2)){
+						foreach($pValue2 as $pName3 => $pValue3){
+							$_SESSION[$token][$rowid][cln($pName)][cln($pName2)][cln($pName3)] = $pValue3;
 						}
-					}					
-				} else {
-					$diff2 = array_diff($v2,$v1);
-					foreach ($diff2 as $key => $value) {
-						$thatkeys = array_keys($v2, $diff2[$key]);
-						array_splice($l1, $thatkeys[0], 0, $value); 
+					} else {
+						$_SESSION[$token][$rowid][cln($pName)][cln($pName2)] = $pValue2;
 					}
 				}
-				$_SESSION[$token][$rowid][$labels] = implode("\n",$l1);
+			} else {
+				$v2 	= explode("\n", $pValue);
+				$v2		= array_filter($v2);
+				if($pName == 'values'){
+						$values = 'labels';
+						$labels = 'values';
+					$l1 	= (!empty($_SESSION[$token][$rowid][$labels]))? explode("\n", $_SESSION[$token][$rowid][$labels]): $v2;
+					$v1 	= (!empty($_SESSION[$token][$rowid][$values]))? explode("\n", $_SESSION[$token][$rowid][$values]): $v2;
+					$diff = array_diff($v1,$v2);
+					if(!empty($diff)){
+						foreach ($diff as $key => $value) {
+							$thatkeys = array_keys($v1, $diff[$key]);
+							if(count($l1) != count($v2)){
+								unset($l1[$thatkeys[0]]);						
+							}
+						}					
+					} else {
+						$diff2 = array_diff($v2,$v1);
+						foreach ($diff2 as $key => $value) {
+							$thatkeys = array_keys($v2, $diff2[$key]);
+							array_splice($l1, $thatkeys[0], 0, $value); 
+						}
+					}
+					$_SESSION[$token][$rowid][$labels] = implode("\n",$l1);
+				}
+				$_SESSION[$token][$rowid][$pName] = implode("\n",$v2);				
 			}
-			$_SESSION[$token][$rowid][$pName] = implode("\n",$v2);		
 		}
 		echo json_encode($_SESSION[$token][$rowid]);
 		break;
@@ -84,5 +96,9 @@
 			$_SESSION[$token] = $temp2;
 			echo json_encode($_SESSION[$token]);
 		break;
+	}
+
+	function cln($val){
+		return str_replace(' ','', strtolower($val));
 	}
 ?>

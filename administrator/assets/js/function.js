@@ -117,139 +117,152 @@ function viewElement(element, type, rowid, request, thatval){
 function propElement(element, type, rowid, request, attributes){
     $('#formView .rows').removeClass('active'); 
     $('#formView #row_'+rowid).addClass('active');   
-    var type, attributes, field, format, attrType, attrField;
-    var propContainer   = $(getContainer(rowid, request));
-    var formProp        = $('#formProp .fields');
+    var type, attributes, field, format;
+    var propTainer  = $(getContainer(rowid, request));
+    var formProp    = $('#formProp .fields');
+    var tempfields  = $('<div class="tempfields"></div>');
+    var apply       = $('<input type="button" id="apply" value="Apply" disabled="disabled" />');
+
 
     formProp.html('');
-    propContainer.append('<div class="tempfields"></div>');
-    formProp.append(propContainer);
+    formProp.append(propTainer);
 
     $.each(attributes, function(key, val) {
+                // console.log(key, val);
         switch(key){
             case 'format':
-                element     = 'input';
-                thistype    = 'hidden';
+                propTainer.append(getFieldProp('input', 'hidden', key, val));
             break;
             case 'required':
-                element     = 'input';
-                thistype    = 'checkbox';     
+                propTainer.append(getFieldProp('input', 'checkbox', key, val));  
             break;
             case 'fieldtype':
-                element     = 'select';
-                thistype    = 'single';
                 var fieldType = ['Text', 'Email', 'Phone US', 'Phone Intl', 'Zip Code'];
-                $.each(fieldType, function(key, value){
-                    var cval    = value.replace(' ', '_').toLowerCase();
+                $.each(fieldType, function(key2, val2){
+                    var cval    = vared(val2);
                     if(cval === val){
-                        fieldType[key] = '}'+value;
+                        fieldType[key2] = '}'+val2;
                     } 
                 });
-                val = fieldType;
+                propTainer.append(getFieldProp('select', 'single', key, fieldType));
             break;
             case 'values':
             case 'options':
             case 'html':
-                element     = 'textarea';
-                thistype    = 'textarea';
+                propTainer.append(getFieldProp('textarea', 'textarea', key, val));
+            break;
+            case 'labels':
+                propTainer.append(getFieldProp('textarea', 'labels', key, val));
+            break;
+            case 'coptions':
+                var elements = getFieldProp('textarea', 'chainselect', key, val);
+                var tempoptions = $('<div class="tempoptions"/>');
+
+                $(tempoptions).append(elements);  
+                $(tempfields).append(tempoptions); 
+                // console.log(key, thiscount++);
+            break;
+            case 'cvalues':
+                var elements = {};
+                var tempvalues = $('<div data-title="" class="tempvalues"/>');
+                $.each(val, function(key3, val3){
+                    $.each(val3, function(key4, val4){
+                        elements[key4] = getFieldProp('textarea', 'textarea', key4, val3[key4]);
+                        $(elements[key4][0]).html(key3+' > '+key4);
+                        $(elements[key4][1]).prop('name', 'cvalues['+key3+']['+key4+']');
+                        tempvalues.append(elements[key4]);
+                        $(".tempoptions", tempfields).append(tempvalues);
+                    });
+                    tempvalues.addClass(key3).attr('data-title', key3);
+                });                
             break;
             default:
-                element     = 'input';
-                thistype    = 'text';
+                propTainer.append(getFieldProp('input', 'text', key, val));
             break;
         }
-        attrField   = getFieldProp(element, thistype, key, val);
-        propContainer.append(attrField);
     });
-    propContainer.append('<input type="button" id="apply" value="Apply" disabled="disabled" />');
+    propTainer.append(tempfields).append(apply);
 }
 
-function getContainer(rowid, request) {
-    var container = '<div class="rows" id="row_'+rowid+'" title="'+request+'" />';
-    return container;
-}
 
 function getFieldProp(field, type, name, value){
+    // console.log(field, name, type, value);
+    var elements;
+    var element = $(getElement(field,type)); 
     var label = $('<label>'+name+'</label>');
-    var element;
-    switch(field){
-        case 'input':
-            if(type == 'hidden'){
-                element = '<input class="row getterfield" type="'+type+'" />';
-            } else {
-                element = '<input class="row field" type="'+type+'" />';
-            }
-        break;
-        case 'textarea':
-            element = '<textarea class="row field" />';
-        break;
-        case 'select':
-            element = '<select class="row field" />';
-        break;
-    }
-    element = $(element);  
-    element.attr('name', name); 
 
     switch(type){
         case 'textarea':
-            element.html(value);
+            element.html(value).prop('name', name);
+            elements = label.add(element);
+        break;
+        case 'labels':
+            element.html(value).prop('name', name);
+            element.attr('rows', 2);
+            elements = label.add(element);
         break;
         case 'single':
             var options = {};
             $.each(value, function(key,val) {
                 if(val.indexOf("}") !== -1){
                     val     = val.replace('}','');
-                    val2    = val.replace(' ', '_').toLowerCase();
+                    val2    = vared(val);
                     options[key] = new Option(val,val2,true);
                 } else {
                     opt     = (val != 'Text')? val: '';
-                    opt    = val.replace(' ', '_').toLowerCase();
+                    opt     = vared(val);
                     options[key] = new Option(val,opt,false);
                 }
             });  
             element.append(options);
+            elements = label.add(element);
         break;
         case 'checkbox':
             element.attr('checked', (value == 'true')?true:false);
-            element.val(value);
+            element.val(value).prop('name', name);
+            elements = label.add(element);
+        break;
+        case 'hidden':
+            elements = element.val(value).prop('name', name);
+        break;
+        case 'chainselect':
+        var tempelements = {};
+        $.each(value, function(key, val){
+            if(typeof val == 'object'){
+                $.each(val, function(key2, val2){
+                    element.html(val2).prop('name', 'cvalues['+key+']['+key2+']');
+                    label = label.html(key.replace('_', ' ')+' > '+key2);
+                    tempelements[key2] = label.add(element);
+                });
+            } else { // Labels
+                element.html(val).prop('name', 'coptions['+key+']');
+                label = label.html(key.replace('_', ' '));
+                tempelements = label.add(element);
+                // console.log('key', key, val);
+            }
+        });
+        elements = tempelements;
         break;
         default:
-            element.val(value);
+            element.val(value).prop('name', name);
+            elements = label.add(element);
         break;
     }
 
-    if(type == 'hidden'){
-        return element;
-    } else {
-        return label.add(element);
-    }
+    return elements;
 }
 
 function getFieldView(field, type, attr) {
+    var element = {}, elements, allElements = {};
+
+    element = getElement(field,type);
+    return applyViewType(element, type, attr);
+}
+
+function applyViewType(element, type, attr){   
+    var voidAttr = ['values', 'options', 'format', 'label', 'cvalues', 'labels']; 
+    var labelElements, allElements = {};
     var label = '<label>'+type+'</label>';
-    var element = {}, elements, labelElements, allElements = {};
-    var voidAttr = ['values', 'options', 'format', 'label'];
-
-    switch(field){
-        case 'input':
-            if(type == 'hidden'){
-                element = '<input class="getterfield" type="'+type+'" />';
-            } else {
-                element = '<input class="field" type="'+type+'" />';
-            }
-        break;
-        case 'textarea':
-            element     = '<textarea class="field" />';
-        break;
-        case 'select':
-            element     = '<select class="field" />';
-        break;
-        case 'custom':
-            label = '';
-            element     = '<div class="field" />';
-        break;
-    } 
-
     labelElements = $(label);
     if(typeof attr != 'undefined'){
         switch(type){
@@ -266,43 +279,97 @@ function getFieldView(field, type, attr) {
                 });
                 allElements[0]   = [labelElements, elements];            
             break;
+            case 'chain':
+                $.each(attr, function(name, val){
+                    // console.log(name, voidAttr.indexOf(name), val);
+                    if(voidAttr.indexOf(name) === -1){
+                        switch(name){
+                            case 'coptions':
+                                var x = 0;
+                                labels = attr['labels'].split("\n");
+
+                                $.each(labels, function(key3, val3){
+                                    gelements = $(element);
+
+                                    if(key3 == 0){
+                                        getter = vared(val3);
+                                        coptions = attr['coptions'][getter].split("\n");
+                                        glabelElements = $(label).html(val3); 
+                                    } else {
+                                        setter = val3.replace(' ', '').toLowerCase();
+                                        slabelElements = $(label).html(val3); 
+
+                                        var goptions = {};
+                                        window.temp_values = {};
+                                        $.each(coptions, function(key2, val2){ 
+                                            selements = $(element);
+                                            coption = vared(val2);
+                                            gelements.prop('id', getter);
+                                            allElements[val3]   = [glabelElements, gelements.append(new Option(val2,coption,false))];
+
+                                            cvalues = attr['cvalues'][setter][coption].split("\n");
+                                            temp_values[coption] = cvalues;
+                                            var soptions = {};
+
+                                            selements.prop('id', setter);
+                                            if(x < 1){
+                                                $.each(cvalues, function(key4, val4){
+                                                    allElements[coption]   = [slabelElements, selements.append(new Option(val4,val4,false))]; 
+                                                }); 
+                                                x++;                                            
+                                                $(document).on("change", gelements, function(){ 
+                                                    var val = $('option:selected', gelements).val();
+                                                    $('#'+setter+' option').remove();    
+                                                    $.each(window.temp_values[val], function(val, val) {
+                                                        $('#'+setter).append(new Option(val,val));
+                                                    });
+                                                });
+                                            }
+                                        });      
+                                    }
+                                });
+                            break;
+                        }
+                    }
+                });
+            break;
             case 'checkbox':
             case 'radio':
-            left = attr['values'].split("\n");
-            right = attr['options'].split("\n");
-            $.each(left, function(key, val){
-                elements = $(element);
+                left    = attr['values'].split("\n");
+                right   = attr['options'].split("\n");
+                $.each(left, function(key, val){
+                    elements = $(element);
+                    $.each(attr, function(name, val2){
+                        if(voidAttr.indexOf(name) === -1){
+                            elements = elements.attr(name, val2);
+                        } 
+                    });
+                    allElements[key]   = [$(label).html(right[key]), elements.val(val)];
+                });          
+            break;
+            case 'single': 
+                left    = attr['options'].split("\n");
+                right   = attr['values'].split("\n");
+
+                var options = {};
+                $.each(left, function(key, val) {
+                    var selected = false;
+                    elements = $(element);
+                    if(right[key].indexOf("}") !== -1){
+                        right[key] = right[key].replace('}','');
+                        var selected = true;
+                    }
+                    options[key] = new Option(val,right[key],selected);
+                });  
+                elements.append(options);
                 $.each(attr, function(name, val2){
                     if(voidAttr.indexOf(name) === -1){
                         elements = elements.attr(name, val2);
-                    } 
+                    } else if(name == 'label'){
+                        labelElements = labelElements.html(val2);
+                    }
                 });
-                allElements[key]   = [$(label).html(right[key]), elements.val(val)];
-            });          
-            break;
-            case 'single': 
-            left = attr['options'].split("\n");
-            right = attr['values'].split("\n");
-
-            var options = {};
-            $.each(left, function(key, val) {
-                var selected = false;
-                elements = $(element);
-                if(right[key].indexOf("}") !== -1){
-                    right[key] = right[key].replace('}','');
-                    var selected = true;
-                }
-                options[key] = new Option(val,right[key],selected);
-            });  
-            elements.append(options);
-            $.each(attr, function(name, val2){
-                if(voidAttr.indexOf(name) === -1){
-                    elements = elements.attr(name, val2);
-                } else if(name == 'label'){
-                    labelElements = labelElements.html(val2);
-                }
-            });
-            allElements[0]   = [labelElements, elements];
+                allElements[0]   = [labelElements, elements];
             break; 
             default:
                 elements = $(element);
@@ -322,121 +389,65 @@ function getFieldView(field, type, attr) {
     return allElements;
 }
 
-function getAttr(type){
-    // console.log(type);
-    var attribute = {'class':''};    
-    switch(type){
-        case 'text':
-            attribute['name']       = '';
-            attribute['label']      = '';
-            attribute['id']         = '';
-            attribute['value']      = '';
-            attribute['size']       = '';
-            attribute['maxlength']  = '';
-            attribute['required']   = '';
-            attribute['fieldtype']  = '';
-        break;
-        case 'textarea':
-            attribute['name']       = '';
-            attribute['label']      = '';
-            attribute['id']         = '';
-            attribute['value']      = '';
-            attribute['cols']       = '';
-            attribute['rows']       = '';
-            attribute['required']   = '';
-        break;
-        case 'html':
-            attribute['id']         = '';
-            attribute['html']       = '';
-        break;
-        case 'single':
-            attribute['name']       = '';
-            attribute['label']      = '';
-            attribute['id']         = '';
-            attribute['size']       = '';
-            attribute['options']    = '';
-            attribute['values']     = '';
-            attribute['required']   = '';
-        break;
-        case 'radio':
-        case 'checkbox':
-            attribute['name']       = '';
-            attribute['label']      = '';
-            attribute['options']    = '';
-            attribute['values']     = '';
-            attribute['required']   = '';
-        break;
-        case 'button':
-        case 'submit':
-        case 'reset':
-            attribute['name']       = '';
-            attribute['id']         = '';
-            attribute['value']      = '';
-        break;
-    }
-    return attribute;
-}
-
-function constructOption(target, thatval, chainselect, rowid) { 
-    $("option", target).remove();
-    var index = rowid.split("_");
-    index = index[1];
+function constructOption(thatval,name) {
+    var target;
+    var index = 0;
     var defaultSelected = false;
     var options = thatval.split("\n");
     options = getUnique(options);
+    countOpt = options.length;
 
-    var i=0;
-    var count;
-    if(chainselect){
-        // append container
-        $('.selections.prop_'+index[0]).remove();
-        var selections = '<div id="prop_'+index[0]+'" class="selections" title="select_chain"></div>';
-        $('#formProp .fields').append(selections);
-    }
-
-    $(target).append(new Option('Please Select...',''));    
-    $.each(options, function(val, val) {
-        if(val != ''){
-            // focus selected value
-            if(val.indexOf("{SELECTED}") !== -1){
-                val = val.replace('{SELECTED}','');
-                var defaultSelected = true;
-            }
-            if(chainselect){
-                index = i++;
-                $(target).append(new Option(val,index,defaultSelected));
-                // clone options properties
-                var clone = '<label for="'+val+'">'+val+'</label><textarea name="option'+ index +'" class="field"></textarea>';
-                $('.selections').append(clone);
-            } else {
-                // construct <options>
-                $(target).append(new Option(val,val,defaultSelected));
-            }
+        if(name =='labels'){
+            target  = $('#formProp .tempfields');
+            div = '<div class="tempoptions '+vared(options[countOpt-1])+'"></div>';
+            // append container
+            $(target).html(''); 
+            $.each(options, function(key, val) {
+                if(val != '' && (key + 1) <= (countOpt - 1)){
+                    var clone = '<label>'+val+'</label><textarea name="coptions['+vared(val)+']" class="field"></textarea><div class="tempvalues '+vared(options[key+1])+'" data-title="'+vared(options[key+1])+'"></div>';
+                    $(target).append($(div).append(clone));
+                }
+            });
+        } else if(name.indexOf("coptions") !== -1){
+            target  = $('#formProp .tempfields .tempoptions .tempvalues');
+            data    = $('#formProp .tempfields .tempoptions .tempvalues').data();
+            label   = data.title;
+            // append container
+            $(target).html(''); 
+            $.each(options, function(key, val) {
+                // console.log(key, val);
+                if(val != ''){
+                    var clone = '<label>'+label+' > '+val+'</label><textarea name="cvalues['+vared(label)+']['+vared(val)+']" class="field"></textarea>';
+                    $(target).append(clone);
+                }
+            });
         }
-    });
-
-    // construct chain select array
-    $(document).on("change", ".selections", function(){ 
-        window.chain_sel = new Array();
-        $('.property[name]', this).each(function(){
-            var chain_val = $(this).attr('value').split("\n");
-            if(chain_val != ''){
-                chain_sel.push(chain_val);
-            }
-        });
-    }); 
-
-    // reconstruct <options> according to selection
-    $(document).on("change", "#cselect0", function(){ 
-        $('#cselect1 option').remove();
-        var val = $(this).val();
-        $('#cselect1').append(new Option('Please Select...',''));        
-        $.each(window.chain_sel[val], function(val, val) {
-            $('#cselect1').append(new Option(val,val));
-        });
-    });
-
 }   
+
+function getElement(field,type){
+    // console.log(field,type);
+    var element;
+    switch(field){
+        case 'input':
+            if(type == 'hidden'){
+                element = '<input class="getterfield" type="'+type+'" />';
+            } else {
+                element = '<input class="field" type="'+type+'" />';
+            }
+        break;
+        case 'textarea':
+            element     = '<textarea class="field" />';
+        break;
+        case 'select':
+            element     = '<select class="field" />';
+        break;
+        case 'custom':
+            label       = '';
+            element     = '<div class="field" />';
+        break;
+    }
+    return element;
+}
 
 // Applied to Select & Chain Select values
 function getUnique(a) {
@@ -452,7 +463,6 @@ function getUnique(a) {
 }
 
 function getRequest(attribute, gettoken, rowid, method) {
-    var pushdata;
     $.ajax({
             type: "POST",
             url: "components/com_formatic/assets/js/temp.js.php?method="+method+"&token="+gettoken+"&row="+rowid,
@@ -464,11 +474,78 @@ function getRequest(attribute, gettoken, rowid, method) {
     return pushdata;
 }
 
-function htmlUnescape(value){
-    return String(value)
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&amp;/g, '&');
+function getContainer(rowid, request) {
+    var container = '<div class="rows" id="row_'+rowid+'" data-title="'+request+'" />';
+    return container;
+}
+
+function getAttr(type){
+    // console.log(type);
+    var attribute = {};    
+    switch(type){
+        //field attributes
+        case 'text':
+            attribute['class']      = '';
+            attribute['name']       = '';
+            attribute['label']      = '';
+            attribute['id']         = '';
+            attribute['value']      = '';
+            attribute['size']       = '';
+            attribute['maxlength']  = '';
+            attribute['required']   = '';
+            attribute['fieldtype']  = '';
+        break;
+        case 'textarea':
+            attribute['class']      = '';
+            attribute['name']       = '';
+            attribute['label']      = '';
+            attribute['id']         = '';
+            attribute['value']      = '';
+            attribute['cols']       = '';
+            attribute['rows']       = '';
+            attribute['required']   = '';
+        break;
+        case 'html':
+            attribute['class']      = '';
+            attribute['id']         = '';
+            attribute['html']       = '';
+        break;
+        case 'single':
+            attribute['class']      = '';
+            attribute['name']       = '';
+            attribute['label']      = '';
+            attribute['id']         = '';
+            attribute['size']       = '';
+            attribute['options']    = '';
+            attribute['values']     = '';
+            attribute['required']   = '';
+        break;
+        case 'chain':
+            attribute['class']      = '';
+            attribute['name']       = '';
+            attribute['required']   = '';
+            attribute['labels']     = '';
+        break;
+        case 'radio':
+        case 'checkbox':
+            attribute['class']      = '';
+            attribute['name']       = '';
+            attribute['label']      = '';
+            attribute['options']    = '';
+            attribute['values']     = '';
+            attribute['required']   = '';
+        break;
+        case 'button':
+        case 'submit':
+        case 'reset':
+            attribute['class']      = '';
+            attribute['name']       = '';
+            attribute['id']         = '';
+            attribute['value']      = '';
+        break;
+    }
+    return attribute;
+}
+function vared(val){
+    return val.replace(' ', '_').toLowerCase();
 }

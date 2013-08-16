@@ -1,6 +1,8 @@
 $(document).ready(function(){
     window.token 	= jQuery('#formaticToken');
     window.pushdata;
+    window.thiscount = 0;
+
 	
 	if($("#jform_fields").html()){
 	    var fields = jQuery.parseJSON($("#jform_fields").html());
@@ -27,41 +29,53 @@ $(document).ready(function(){
     			$(this).append('<input type="button" id="apply" value="Apply" />');
 			}
 		}
+	}).disableSelection();
+
+	$("#sortable").find(".tempfields").bind('mousedown.ui-disableSelection selectstart.ui-disableSelection', function(e) {
+		e.stopImmediatePropagation();
 	});
-	$( "#sortable" ).disableSelection();
+
 });
 
 // Fields
 $(document).on("click", ".addfield", function(){ 
-	var request = $(this).attr('title');
+	var data = $(this).data();
+	var request = data.title;
 	construct(request, 'store');
 });
 
 // Properties
-$(document).on("click", ".field", function(){
-	var target = $(this).parent();
-	$('#apply', target).attr('disabled', false);
+$(document).on("change", ".field", function(){
+	var target = $(this).closest('.rows');
+	var name = $(this).prop('name');
+
+	if(name == 'labels' || name.indexOf("cop") !== -1){
+		constructOption($(this).val(), name);
+	}
+
+	$('#apply', target).prop('disabled', false);
 });
 
 
 $(document).on("click", "#formView #apply", function(){ 
 	var position = {}, row, x=1;
 	$("#formView .rows").each(function(){
-		row = $(this).attr('id').split('_');
+		row = $(this).prop('id').split('_');
 		position[x] = Number(row[1]);
 		x++;
 	});
 	construct(position, 'position');
 });
 
-$(document).on("click", "#formProp #apply", function(){ 
+$(document).on("click", "#formProp #apply", function(){
+	var data = $(this).closest('.rows').data();
 	var request = {};	
 	var prop = {};
-	request['parentid'] = ($(this).parent().attr('id'))? $(this).parent().attr('id'): $(this).parent().parent().attr('id');	
-	request['title'] 	= ($(this).parent().attr('title'))? $(this).parent().attr('title'): $(this).parent().parent().attr('title');	
+	request['parentid'] = $(this).closest('.rows').prop('id');	
+	request['title'] 	= data.title;	
 
-	$('#formProp .row').each(function() {
-		prop[$(this).attr('name')] = htmlEscape($(this).val());
+	$('#formProp .field').each(function() {
+		prop[$(this).prop('name')] = htmlEscape($(this).val());
 	})
 	request['properties'] = prop;
 	construct(request, 'update');
@@ -70,18 +84,19 @@ $(document).on("click", "#formProp #apply", function(){
 $(document).on("click", "#formParams #apply", function(){ 
 	var request = {};	
 	$('#formParams .field').each(function(){
-		request[$(this).attr('name')] = $(this).val();
+		request[$(this).prop('name')] = $(this).val();
 	});	
 	$("#jform_parameters").html(JSON.stringify(request));
 });
 
 // View
 $(document).on("click", "#formView h3", function(){ 
+	var data = $(this).closest('.rows').data();
     $('#formView .rows').removeClass('active');	
 	$(this).parent().addClass('active');	
 	var request = {};	
-	request['parentid'] = $(this).parent().attr('id');	
-	request['title'] 	= $(this).parent().attr('title');
+	request['parentid'] = $(this).parent().prop('id');	
+	request['title'] 	= data.title;
 	construct(request, 'get');
 });
 
@@ -89,18 +104,18 @@ $(document).on("click", ".cancel", function(){
 	var btn = $(this).parent();
 	if(btn.hasClass('halt')){
 		btn.removeClass('halt');
-		$(this).attr('title', 'Delete');
+		$(this).prop('title', 'Delete');
 	} else {
 		btn.addClass('halt');
-		$(this).attr('title', 'Cancel Action');
+		$(this).prop('title', 'Cancel Action');
 	}
 });
 
 $(document).on("click", ".confirm", function(){ 
 	var request = {};	
-	request['parentid'] = $(this).parent().parent().attr('id');		
+	request['parentid'] = $(this).closest('.rows').prop('id');
 	construct(request, 'delete');
-	$(this).parent().parent().remove();
+	$(this).closest('.rows').remove();
 });
 
 // Disable button element
@@ -115,8 +130,6 @@ $(document).on("click", "#formProp input[type=checkbox]", function(){
 function htmlEscape(str) {
     return String(str)
         .replace(/&/g, '&amp;')
-        // .replace(/"/g, '&quot;')
-        // .replace(/'/g, '&#39;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
 }

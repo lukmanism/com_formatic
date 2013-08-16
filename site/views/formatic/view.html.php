@@ -52,7 +52,6 @@ class FormaticViewFormatic extends JView {
         }
         
         $this->_prepareDocument();
-
         parent::display($tpl);
     }
 
@@ -88,6 +87,10 @@ class FormaticViewFormatic extends JView {
 			        case 'options':
 			        	$labels = explode("\n", $values);
 			        break;
+			        case 'coptions':
+			        case 'cvalues':
+			        	$value[$name] = $values;
+			        break;
 			        case 'values':
 			        	$value = explode("\n", $values);
 			        break;
@@ -105,7 +108,6 @@ class FormaticViewFormatic extends JView {
 				$prewrap 	= '';
 				$postwrap 	= '';
 			}
-
 		    switch($format[0]){
 		        case 'input':
 		        	if(in_array($format[1], $option)){
@@ -124,17 +126,64 @@ class FormaticViewFormatic extends JView {
 		            $element = $prewrap.$label.'<textarea '.$attributes.'>'.$value.'</textarea>'.$postwrap;
 		        break;
 		        case 'select':
-	            	$element .= $prewrap.$label.'<select '.$attributes.'>';
-	        		foreach($value as $key => $val){
-	        			if(stristr($val, '}')){
-	        				$selected = 'selected="selected"';
-	        				$val = str_replace('}', '', $val);
-	        			} else {
-	        				$selected = '';
-	        			}
-		            	$element .= '<option value="'.$val.'" '.$selected.'>'.$labels[$key].'</option>';
-	        		}
-		            $element .= '</select>'.$postwrap;
+					if($format[1] == 'chain'){
+		            	// $element .= $prewrap;
+
+			        	foreach ($value as $ckey => $cvalues) {
+				        	foreach ($cvalues as $getter => $setter) {
+				        		if(is_array($setter)){
+				        			$getid =  $getter;
+				        			$element .= $prewrap.'<label>'.$labels[1].'</label>';
+				        			foreach ($setter as $setkey => $setval) {
+			            				$element .= '<select '.$attributes.' id="'.$getter.'">';
+					        				$selections = explode("\n", $setval);
+					        			foreach ($selections as $key => $val) {
+				            				$element .= '<option value="'.$val.'">'.$val.'</option>';
+					        			}
+				            			$element .= '</select>'.$postwrap;
+				            			break; // Limit 1
+				        			}
+				        		} else {
+				        			$setid =  $getter;
+			            			$element .= $prewrap.'<label>'.$labels[0].'</label>'.'<select id="'.$getter.'">';
+					        		$selections = explode("\n", $setter);
+				        			foreach ($selections as $key => $val) {
+			            				$element .= '<option value="'.strtolower($val).'">'.$val.'</option>';
+				        			}
+				            		$element .= '</select>'.$postwrap;
+				        		}
+				        	}
+			        	}
+			        	// echo json_encode($value);
+
+			        	// print JS
+			        	$element .= '<script>	var selected, selections, selectval = {};
+	selectval[\''.$field['name'].'\'] = '.json_encode($setter).';
+	$(document).on("change", "#'.$setid.'", function(){ 
+		selected = $("option:selected", $(this)).val();
+		selections = selectval[\''.$field['name'].'\'][selected].split("\n");
+		$("#'.$getid.' option").remove();
+		$.each(selections, function(val, val) {
+			$("#'.$getid.'").append(new Option(val,val));
+		});
+	});
+</script>';
+			            // $element .= $postwrap;
+					} else {
+		            	$element .= $prewrap.$label.'<select '.$attributes.'>';
+		        		foreach($value as $key => $val){
+		        			if(stristr($val, '}')){
+		        				$selected = 'selected="selected"';
+		        				$val = str_replace('}', '', $val);
+		        			} else {
+		        				$selected = '';
+		        			}
+			            	$element .= '<option value="'.$val.'" '.$selected.'>'.$labels[$key].'</option>';
+		        		}
+			            $element .= '</select>'.$postwrap;
+
+					}
+
 		        break;
 		    }
 		    return $element;

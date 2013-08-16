@@ -39,6 +39,7 @@ li.addfield:hover {
     position: relative;
     width: 94%;
 }
+.tempvalues,
 #formView .rows.active,
 #formView .rows:hover {
 	background-color: #F1F9FE;
@@ -106,7 +107,21 @@ li.addfield:hover {
 #formProp label {
     text-transform: capitalize;
 }
-
+.tempfields {
+    float: left;
+    clear: both;
+    width: 100%;
+}
 .tempfields > div {
     min-height: 24px;
+}
+#formView select {
+    max-width: 50%;
+}
+.tempvalues {
+    float: left;
+    clear: both;
+    max-width: 100%;
+    width: auto!important;
+    padding: 8px;
 }

@@ -30,8 +30,8 @@ Joomla.submitbutton = function(task) {
 }
 </script>
 
-<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
-<script src="http://code.jquery.com/ui/1.10.3/jquery-ui.js"></script>
+<script src="<?php echo JURI::root();?>administrator/components/com_formatic/assets/js/jquery-1.10.2.min.js"></script>
+<script src="<?php echo JURI::root();?>administrator/components/com_formatic/assets/js/jquery-ui-1.10.3.custom.min.js"></script>
 <script src="<?php echo JURI::root();?>administrator/components/com_formatic/assets/js/event.js"></script>
 <script src="<?php echo JURI::root();?>administrator/components/com_formatic/assets/js/function.js"></script>
 
@@ -109,31 +109,31 @@ Joomla.submitbutton = function(task) {
         <div id="field1" class="fieldwrapper">
         <div class="rows">
         <ul class="sfield">
+            <li>Custom
+                <ul>
+                <li class="addfield" data-title="custom_html">HTML</li>
+            </ul>
+            </li>
             <li>Input
             <ul>
-                <li class="addfield" title="input_text">Text</li>
-                <li class="addfield" title="input_checkbox">Checkbox</li>
-                <li class="addfield" title="input_radio">Radio</li>
-                <li class="addfield" title="input_button">Button</li>
-                <li class="addfield" title="input_reset">Reset</li>
-                <li class="addfield" title="input_submit">Submit</li>
+                <li class="addfield" data-title="input_button">Button</li>
+                <li class="addfield" data-title="input_checkbox">Checkbox</li>
+                <li class="addfield" data-title="input_radio">Radio</li>
+                <li class="addfield" data-title="input_reset">Reset</li>
+                <li class="addfield" data-title="input_submit">Submit</li>
+                <li class="addfield" data-title="input_text">Text</li>
             </ul>
             </li>
             <li>Select
                 <ul>
-                <!-- <li class="addfield" title="select_chain">Chain-Select</li> -->
-                <li class="addfield" title="select_single">Select</li>
-                <!-- <li class="addfield" title="select_date">Select (Date)</li> -->
+                <li class="addfield" data-title="select_chain">Chain-Select</li>
+                <li class="addfield" data-title="select_single">Select</li>
+                <!-- <li class="addfield" data-title="select_date">Select (Date)</li> -->
             </ul>
             <li>Textarea
                 <ul>
-                <li class="addfield" title="textarea_textarea">Textarea</li>
+                <li class="addfield" data-title="textarea_textarea">Textarea</li>
             </ul>
-            <li>Custom
-                <ul>
-                <li class="addfield" title="custom_html">HTML</li>
-            </ul>
-            </li>
         </ul>
         </div>
 
